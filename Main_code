@@ -1,0 +1,262 @@
+
+CSEG
+.ORG 0
+	rjmp prg
+
+.ORG 0x100
+encodedval: .DB 0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70, 0x7F, 0x7B, 0x77, 0x1F, 0x4E, 0x3D, 0x4F, 0x47
+
+.ORG 0x0300
+prg:
+	ldi r16, high(ramend)	;initialization of stack pointer
+	out sph, r16
+	ldi r16, low(ramend)
+	out spl, r16
+
+	ldi r16, $ff
+	out ddrb, r16		;setting the direction of ports b (display select) and d (displayed value)
+	out ddrd, r16
+
+	ldi zl, low(2*encodedval)
+	ldi zh, high(2*encodedval)
+
+
+main:
+ldi r16, 0b01111111
+out ddrb, r16
+ldi r17, 0b10000000
+out portb, r17
+
+
+trigger:
+ldi r18,0xff
+ldi r19,0x00
+in r18, pinb
+cp r19, r18
+cbi portb, 5
+brne trigger
+sbi portb, 5
+
+sensor:
+ldi r18, 0xff
+out ddre, r18
+sbi porte, 0
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+cbi porte, 0
+cbi porte, 2
+cbi porte, 3
+
+cbi ddre, 1
+cbi porte, 1
+in r20, pine
+//out ddrc, r16
+//out pinc, r20
+
+sprawdzenie:
+in r20, pine
+ldi r21,0b00000010
+cp r21,r20
+brne sprawdzenie
+
+
+ldi r20, 0xff
+ldi r21, 0x00
+ldi r22, 0xff
+////////////////
+ldi r23, 0x00
+OUTER_LOOP :
+ldi r24,0x00            
+inc r23                 
+cp r23, r20           
+brne INNER_LOOP        
+
+INNER_LOOP:
+inc r24                                     
+in r25, pine         
+cp r25, r21            
+breq LABEL_BELOW
+cp r24,r22           
+breq OUTER_LOOP         
+rjmp INNER_LOOP        
+
+
+LABEL_BELOW:
+nop
+
+lsl r23
+
+///Segment that checks numbers of hundreds, tens and digits
+//ldi r23, 180 /// for modulation 
+MOV r16, r23   /////distance
+ldi r17, 0x00  /////gonna go to from 0 to the rest of mod100 
+ldi r19, 0x00 //////register that’s zero
+ldi r20, 200
+hudreads : ///////decrements from x to 100 or to zera and spits out r17 mod100
+ldi r18, 100 ////// register used  to turn of loop can use it outside of loop as well
+ 
+cp r16, r18  ///check if 100
+breq setka
+cp r16, r20  ///check if 200
+breq dwusetka
+cp r16, r19 ////check if 0
+breq dziesiontki
+dec r16    ///decrements down to 100 or 0 
+inc r17    /// sum of dzięsiątki i jedności(segments that count ones and tens)
+brne hudreads
+
+/// Segment counting down number of tens
+// r19 can still be 0
+// w r17 number to make the mod10
+
+
+//jednosci :
+/// in r28 number of ones
+// in r17 number of tens
+//rjmp wyswietlacz (display)
+
+setka:
+ldi r16, 0x01
+rjmp dziesiontki
+dwusetka:
+ldi r16, 0x02
+
+dziesiontki :
+ldi r18, 0x5A
+ldi r20, 0x50
+ldi r21, 0x46
+ldi r22, 0x3c
+ldi r23, 0x32
+ldi r24, 0x28
+ldi r25, 0x1e
+ldi r26, 0x14
+ldi r27, 0xa
+mov r29, r17
+ZEROING:
+ldi r28, 0
+A:
+cp r17, r18
+breq nine
+cp r17, r20
+breq eight
+cp r17, r21
+breq seven
+cp r17, r22
+breq six
+cp r17, r23
+breq five
+cp r17, r24
+breq four
+cp r17, r25
+breq tree
+cp r17, r26
+breq two
+cp r17, r27
+breq one
+cp r17, r28
+breq zero
+dec r17
+inc r28
+cp r28,r27
+breq ZEROING
+rjmp A
+
+rjmp Edec
+nine: 
+ldi r17, 0x09
+rjmp Edec
+eight:
+ldi r17, 0x08
+rjmp Edec
+seven:
+ldi r17, 0x07
+rjmp Edec
+six:
+ldi r17, 0x06
+rjmp Edec
+five:
+ldi r17, 0x05
+rjmp Edec
+four:
+ldi r17, 0x04
+rjmp Edec
+tree:
+ldi r17, 0x03
+rjmp Edec
+two:
+ldi r17, 0x02
+rjmp Edec
+one:
+ldi r17, 001
+rjmp Edec
+zero:
+ldi r17, 0x00
+
+Edec:
+mov r18, r28
+
+
+///r16, r17, r18 to be displayed 
+
+add zl, r16
+lpm r16, z
+com r16 ; Display is common-anode, so segments are activated by '0'
+ldi zl, 0
+add zl, r17
+lpm r17, z
+com r17 ; Display is common-anode, so segments are activated by '0'
+ldi zl,0
+add zl, r18
+lpm r18, z
+com r18 ; Display is common-anode, so segments are activated by '0'
+ldi r20,0xff
+screen:
+
+out portd, r16 
+ldi r19, 0b11110111; Select first digit
+out portb, r19 ; Set port B
+out portb, r20
+
+nop
+nop
+nop
+
+out portd, r17 
+ldi r19, 0b11111101; Select second digit
+out portb, r19 ; Set port B
+out portb, r20
+
+nop
+nop
+nop
+
+out portd, r18
+ldi r19, 0b11111110; Select third digit
+out portb, r19 ; Set port B
+out portb, r20
+
+nop
+nop
+nop
+
+rjmp screen
+
+
+
+stop:
+rjmp stop
