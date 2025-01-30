@@ -1,5 +1,7 @@
 # ATMega328PB_microcontroller
-Introduction
+Introduction of project done with my coleague during second year of Bachelors studies, the main challenge was overcoming 8-bit size constraints.
+The time meassurment, distance calculations and display multiplexing required handling larger values, we had to split values across multiple registers, manually perform division and shifts, and optimize memory usage to fit everything within available resources.
+
 In our project we have decided to make a distance measuring device which uses ultrasonic waves to determine the distance between the sensor and an obstacle and display them on a screen.
 
 Components 
@@ -11,7 +13,8 @@ Connecting wires
 
 Working principles
 We have connected our components as shown below in the figure.
-![image](https://github.com/user-attachments/assets/086e3406-039d-4335-9b6b-e8f337f98b61)
+![image](https://github.com/user-attachments/assets/c8609739-6fdb-4406-94d3-27ed8eacddf1)
+
 
 
 
