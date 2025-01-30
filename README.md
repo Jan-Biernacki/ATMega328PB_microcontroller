@@ -11,6 +11,8 @@ Connecting wires
 
 Working principles
 We have connected our components as shown below in the figure.
+![image](https://github.com/user-attachments/assets/086e3406-039d-4335-9b6b-e8f337f98b61)
+
 
 
 How does the HC-SR04 ultrasonic sensor works
